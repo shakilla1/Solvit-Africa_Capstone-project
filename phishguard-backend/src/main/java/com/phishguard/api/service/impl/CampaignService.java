@@ -5,6 +5,7 @@ import com.phishguard.api.enums.*;
 import com.phishguard.api.repository.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,9 @@ public class CampaignService {
     private final NotificationService notificationService;
     private final EmailService emailService;
     private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
 
     // ── Create Campaign ────────────────────────────────────
     @Transactional
@@ -67,14 +71,17 @@ public class CampaignService {
             if (email == null || email.isBlank()) continue;
 
             TargetUser user = userRepo.findByEmail(email).orElseGet(() -> {
+                String tempPassword = UUID.randomUUID().toString();
                 TargetUser newUser = TargetUser.builder()
                         .fullName(t.getOrDefault("name", email))
                         .email(email)
                         .department(t.getOrDefault("department", ""))
-                        .password(passwordEncoder.encode(UUID.randomUUID().toString()))
+                        .password(passwordEncoder.encode(tempPassword))
                         .admin(admin)
                         .build();
-                return userRepo.save(newUser);
+                newUser = userRepo.save(newUser);
+                sendWelcomeEmail(newUser.getEmail(), newUser.getFullName(), tempPassword);
+                return newUser;
             });
 
             CampaignTarget ct = CampaignTarget.builder()
@@ -297,5 +304,33 @@ public class CampaignService {
                 .orElseThrow(() -> new RuntimeException("Campaign not found"));
         if (!c.getAdmin().getId().equals(adminId)) throw new RuntimeException("Access denied");
         return c;
+    }
+
+    private void sendWelcomeEmail(String to, String fullName, String tempPassword) {
+        String loginUrl = frontendUrl + "/login";
+        String subject = "Your PhishGuard Pro Training Account";
+        String body = "<html><body style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;'>" +
+                "<h2 style='color:#2563eb;'>Welcome to PhishGuard Pro, " + escapeHtml(fullName) + "!</h2>" +
+                "<p>You have been enrolled in a security awareness training program. Below are your login credentials:</p>" +
+                "<table style='border-collapse:collapse;width:100%;margin:16px 0;'>" +
+                "<tr><td style='padding:8px;background:#f1f5f9;border:1px solid #cbd5e1;'><strong>Email</strong></td>" +
+                "<td style='padding:8px;border:1px solid #cbd5e1;'>" + escapeHtml(to) + "</td></tr>" +
+                "<tr><td style='padding:8px;background:#f1f5f9;border:1px solid #cbd5e1;'><strong>Temporary Password</strong></td>" +
+                "<td style='padding:8px;border:1px solid #cbd5e1;'>" + escapeHtml(tempPassword) + "</td></tr>" +
+                "</table>" +
+                "<p style='color:#dc2626;'><strong>Please change your password immediately after logging in.</strong></p>" +
+                "<p><a href='" + loginUrl + "' style='display:inline-block;padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:6px;'>Log In Now</a></p>" +
+                "<p style='color:#64748b;font-size:13px;margin-top:24px;'>If you did not expect this email, please contact your administrator.</p>" +
+                "</body></html>";
+        try {
+            emailService.sendTransactionalEmail(to, subject, body);
+        } catch (Exception e) {
+            log.warn("Welcome email to {} failed: {}", to, e.getMessage());
+        }
+    }
+
+    private String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 }
