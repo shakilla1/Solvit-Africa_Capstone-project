@@ -1,0 +1,36 @@
+# ── Java ──────────────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+
+# ── Local config (contains secrets - DO NOT COMMIT) ──────────
+*.properties
+!schema.sql
+!pom.xml
+
+# ── Node / Vue ─────────────────────────────────────────────────
+node_modules/
+dist/
+.vite/
+.env.local
+.env.*.local
+
+# ── OS / Editor ────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Git ────────────────────────────────────────────────────────
+.gitignore
+
+# ── Misc ───────────────────────────────────────────────────────
+*.iml
+*.ipr
+*.iws
+*.db
+*.sqlite
