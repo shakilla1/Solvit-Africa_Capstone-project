@@ -41,13 +41,6 @@ public class CampaignService {
         AdminUser admin = adminRepo.findById(adminId)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
 
-        // Plan check: campaign limit
-        long existing = campaignRepo.countByAdminId(adminId);
-        if (existing >= admin.getPlan().getMaxCampaigns()) {
-            throw new RuntimeException("Campaign limit reached for your plan (" +
-                    admin.getPlan().name() + "). Please upgrade.");
-        }
-
         EmailTemplate template = templateRepo.findById(templateId)
                 .orElseThrow(() -> new RuntimeException("Template not found"));
 

@@ -39,7 +39,7 @@ public class AdminUser {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Plan plan = Plan.FREE;
+    private Plan plan = Plan.ENTERPRISE;
 
     private boolean mfaEnabled = false;
     @JsonIgnore
