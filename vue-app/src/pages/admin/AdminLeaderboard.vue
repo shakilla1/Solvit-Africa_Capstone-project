@@ -112,31 +112,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { Trophy, Medal, Award, BarChart2, Users, TrendingUp, TrendingDown, Download } from '@lucide/vue'
+import { ref, computed, onMounted } from 'vue'
 import Card from '../../components/Card.vue'
-import StatCard from '../../components/StatCard.vue'
 import Badge from '../../components/Badge.vue'
 import Button from '../../components/Button.vue'
 import Input from '../../components/Input.vue'
+import { userApi } from '../../api'
 
 const search = ref('')
 const filterDept = ref('')
-
-const users = [
-  { rank: 1, name: 'Sarah Wilson', dept: 'IT', points: 420, campaigns: 8, avgScore: 92, badge: 'Phishing Detective', change: 0, avatar: 'SW' },
-  { rank: 2, name: 'Mike Chen', dept: 'Finance', points: 385, campaigns: 7, avgScore: 88, badge: 'Security Aware', change: 1, avatar: 'MC' },
-  { rank: 3, name: 'Emma Davis', dept: 'Marketing', points: 310, campaigns: 6, avgScore: 79, badge: 'Security Aware', change: -1, avatar: 'ED' },
-  { rank: 4, name: 'John Doe', dept: 'Sales', points: 235, campaigns: 3, avgScore: 65, badge: 'Security Aware', change: 2, avatar: 'JD' },
-  { rank: 5, name: 'Tom Brown', dept: 'HR', points: 220, campaigns: 5, avgScore: 72, badge: 'Phishing Novice', change: 0, avatar: 'TB' },
-  { rank: 6, name: 'Lisa Anderson', dept: 'Operations', points: 195, campaigns: 4, avgScore: 58, badge: 'Phishing Novice', change: -2, avatar: 'LA' },
-]
+const users = ref<any[]>([])
+const loading = ref(true)
 
 const filteredUsers = computed(() =>
-  users.filter(u => {
+  users.value.filter(u => {
     const matchSearch = !search.value || u.name.toLowerCase().includes(search.value.toLowerCase())
     const matchDept = !filterDept.value || u.dept === filterDept.value
     return matchSearch && matchDept
   })
 )
+
+onMounted(async () => {
+  try {
+    const { data } = await userApi.leaderboard()
+    users.value = data.map((u: any) => ({ ...u, change: 0, avgScore: 0 }))
+  } catch {
+    users.value = []
+  } finally {
+    loading.value = false
+  }
+})
 </script>
