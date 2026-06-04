@@ -91,6 +91,9 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post('/api/auth/admin/login', { email, password }),
 
+  register: (fullName: string, orgName: string, email: string, password: string) =>
+    api.post('/api/auth/admin/register', { fullName, orgName, email, password }),
+
   userLogin: (email: string, password: string) =>
     api.post('/api/auth/user/login', { email, password }),
 

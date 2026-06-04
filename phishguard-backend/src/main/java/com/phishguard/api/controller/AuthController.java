@@ -24,6 +24,18 @@ public class AuthController {
         return ResponseEntity.ok(authService.login(req.email, req.password));
     }
 
+    @PostMapping("/admin/register")
+    public ResponseEntity<?> adminRegister(@Valid @RequestBody AdminRegisterRequest req) {
+        AdminUser admin = authService.register(req.fullName, req.orgName, req.email, req.password);
+        return ResponseEntity.ok(Map.of(
+                "message", "Account created. Please log in.",
+                "email", admin.getEmail(),
+                "fullName", admin.getFullName(),
+                "role", admin.getRole().name(),
+                "plan", admin.getPlan().name()
+        ));
+    }
+
     @PostMapping("/user/register")
     public ResponseEntity<?> userRegister(@Valid @RequestBody RegisterRequest req) {
         return ResponseEntity.ok(authService.userRegister(req.fullName, req.email, req.password));
@@ -70,5 +82,12 @@ public class AuthController {
     @Data static class MfaRequest {
         @NotBlank String email;
         @NotBlank String code;
+    }
+
+    @Data static class AdminRegisterRequest {
+        @NotBlank String fullName;
+        @NotBlank String orgName;
+        @Email @NotBlank String email;
+        @NotBlank String password;
     }
 }

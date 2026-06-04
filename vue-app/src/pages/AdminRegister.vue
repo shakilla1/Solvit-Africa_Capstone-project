@@ -96,19 +96,18 @@ async function handleSubmit() {
 
   loading.value = true
   try {
-    await authApi.register({ fullName: form.value.fullName, organisationName: form.value.orgName, email: form.value.email, password: form.value.password })
-  } catch {
-    // Backend offline — fall through to demo session
+    const { data } = await authApi.register(form.value.fullName, form.value.orgName, form.value.email, form.value.password)
+    const { message, email, fullName, role, plan } = data
+    localStorage.setItem('accessToken', 'temp-' + email)
+    localStorage.setItem('refreshToken', 'temp-refresh-' + email)
+    localStorage.setItem('currentUser', JSON.stringify({ email, fullName, role: role || 'ROLE_ADMIN', plan: plan || 'ENTERPRISE' }))
+    loading.value = false
+    toast.success(message || 'Account created successfully!')
+    router.push('/admin/dashboard')
+  } catch (err: any) {
+    loading.value = false
+    const msg = err.response?.data?.message || err.response?.data?.error || 'Registration failed. Please try again.'
+    toast.error(msg)
   }
-
-  // Save demo session so auth guard passes
-  const user = { email: form.value.email, fullName: form.value.fullName, role: 'ROLE_ADMIN', plan: 'STARTER' }
-  localStorage.setItem('accessToken', 'demo-token')
-  localStorage.setItem('refreshToken', 'demo-refresh')
-  localStorage.setItem('currentUser', JSON.stringify(user))
-
-  loading.value = false
-  toast.success('Account created successfully!')
-  router.push('/admin/dashboard')
 }
 </script>

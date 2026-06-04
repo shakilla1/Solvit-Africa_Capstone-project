@@ -96,7 +96,7 @@ public class AuthService {
                 .email(email)
                 .password(passwordEncoder.encode(rawPassword))
                 .role(Role.ROLE_ADMIN)
-                .plan(Plan.FREE)
+                .plan(Plan.ENTERPRISE)
                 .build();
         return adminRepo.save(admin);
     }
