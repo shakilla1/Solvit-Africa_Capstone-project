@@ -51,10 +51,10 @@
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2 mb-0.5">
               <h3 class="text-sm font-semibold text-[#0f172a]">{{ topic.title }}</h3>
-              <Badge v-if="getProgress(topic.id)?.status === 'completed'" variant="green" class="text-xs">
+              <Badge v-if="getProgress(topic.id)?.status === 'COMPLETED'" variant="green" class="text-xs">
                 ✓ {{ getProgress(topic.id)?.score }}%
               </Badge>
-              <Badge v-else-if="getProgress(topic.id)?.status === 'in_progress'" variant="amber" class="text-xs">
+              <Badge v-else-if="getProgress(topic.id)?.status === 'IN_PROGRESS'" variant="amber" class="text-xs">
                 In Progress
               </Badge>
             </div>
@@ -135,46 +135,63 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { PlayCircle, Check, Lock, Trophy, Award } from '@lucide/vue'
 import Card from '../../components/Card.vue'
 import Button from '../../components/Button.vue'
 import Badge from '../../components/Badge.vue'
-import { trainingProgress, getTopicProgress } from '../../stores/simStore'
+import { api } from '../../api'
 import { topics } from '../../stores/topics'
 
 const route = useRoute()
 const token = route.query.token as string || ''
+const progressList = ref<any[]>([])
+const loading = ref(true)
 
-const getProgress = (topicId: string) => getTopicProgress(topicId)
+const totalTopics = topics.length
+
+function getProgress(topicId: string) {
+  return progressList.value.find((p: any) => p.topicId === topicId) || {}
+}
 
 const completedCount = computed(() =>
-  topics.filter(t => getTopicProgress(t.id)?.status === 'completed').length
+  topics.filter(t => getProgress(t.id)?.status === 'COMPLETED').length
 )
 
 const overallProgress = computed(() =>
-  Math.round((completedCount.value / topics.length) * 100)
+  Math.round((completedCount.value / totalTopics) * 100)
 )
 
-const allTopicsDone = computed(() => completedCount.value >= topics.length)
+const allTopicsDone = computed(() => completedCount.value >= totalTopics)
 
-const finalProgress = computed(() => getTopicProgress('final-assessment'))
-const finalDone = computed(() => finalProgress.value?.status === 'completed')
+const finalProgress = computed(() => getProgress('final-assessment'))
+const finalDone = computed(() => finalProgress.value?.status === 'COMPLETED')
 const finalScore = computed(() => finalProgress.value?.score ?? 0)
 
 const activeSession = computed(() =>
-  trainingProgress.value.find(p => p.status === 'in_progress' && p.topicId !== 'final-assessment')
+  progressList.value.find((p: any) => p.status === 'IN_PROGRESS' && p.topicId !== 'final-assessment')
 )
 
 function getTopicStatusClass(topicId: string) {
-  const p = getTopicProgress(topicId)
-  if (p?.status === 'completed') return 'bg-[#16a34a] text-white'
-  if (p?.status === 'in_progress') return 'bg-[#d97706] text-white'
+  const p = getProgress(topicId)
+  if (p?.status === 'COMPLETED') return 'bg-[#16a34a] text-white'
+  if (p?.status === 'IN_PROGRESS') return 'bg-[#d97706] text-white'
   return 'bg-[#e2e8f0] text-[#94a3b8]'
 }
 
 function topicLink(topicId: string) {
   return `/training/${topicId}${token ? '?token=' + token : ''}`
 }
+
+onMounted(async () => {
+  try {
+    const { data } = await api.get('/api/user/training/me')
+    progressList.value = data.progress || []
+  } catch {
+    progressList.value = []
+  } finally {
+    loading.value = false
+  }
+})
 </script>

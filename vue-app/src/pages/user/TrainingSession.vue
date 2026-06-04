@@ -578,7 +578,7 @@ async function handleNextQuestion() {
     const existing = JSON.parse(localStorage.getItem(PROGRESS_KEY) || '[]')
     const finalPct = Math.round(score.value / (topicQuestions.value.length * 10) * 100)
     const idx = existing.findIndex((p: any) => p.topicId === topicId)
-    const entry = { topicId, topicTitle: topic.value.title, status: 'completed', score: finalPct, completedAt: new Date().toISOString(), answers: answers.value }
+    const entry = { topicId, topicTitle: topic.value.title, status: 'COMPLETED', score: finalPct, completedAt: new Date().toISOString(), answers: answers.value }
     if (idx >= 0) existing[idx] = entry
     else existing.push(entry)
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(existing))

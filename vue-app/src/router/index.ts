@@ -7,7 +7,9 @@ function isAdminLoggedIn() {
 }
 
 function isUserLoggedIn() {
-  return !!localStorage.getItem('accessToken')
+  return !!localStorage.getItem('accessToken') && (() => {
+    try { const u = JSON.parse(localStorage.getItem('currentUser') || 'null'); return u?.role !== 'ROLE_ADMIN' } catch { return true }
+  })()
 }
 
 const router = createRouter({
